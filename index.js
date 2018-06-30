@@ -1,7 +1,8 @@
 const app = require("express")();
+const displayActions = require("./functions/display-actions.js");
 
-app.get("/", (req, res) => {
-	res.send("Testing 1 2 3");
+app.post("/", (req, res) => {
+	displayActions(req, res);
 });
 
 app.listen(3000, () => console.log("Server running"));
