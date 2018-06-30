@@ -1,8 +1,7 @@
-const app = require('express')();
+const app = require("express")();
 
-app.get('/', (req, res) => {
-  let string = "Testing 1 2 23";
-  res.send(string);
+app.get("/", (req, res) => {
+	res.send("Testing 1 2 3");
 });
 
-app.listen(3000, () => console.log('Server running'));
+app.listen(3000, () => console.log("Server running"));
