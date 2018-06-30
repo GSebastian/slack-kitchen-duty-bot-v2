@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "start-docker": "docker build -t slack-kitchen-duty-bot-v2 . && docker run -p 3000:3000 slack-kitchen-duty-bot-v2"
   },
   "author": "",
   "license": "ISC",
