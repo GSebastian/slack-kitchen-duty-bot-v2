@@ -10,99 +10,87 @@ admin.initializeApp({
 var db = admin.database();
 
 module.exports = async (req, res) => {
-	// Responds immediately. Firebase logic executes in the background and sends a request to
-	// the callback URL
-
-	await handleActionsImmediately(req, res);
 	await handleActions(req, res);
 };
-
-//#region Handle actions immediately
-function handleActionsImmediately(req, res) {
-	let body = JSON.parse(req.body.payload);
-
-	if (body.actions[0].value == "who" || body.actions[0].value == "nudge") {
-		res.send("⚡️ Crunching the numbers ... \n\n Proving String Theory 💡\n\n " +
-			"Almost there ...");
-	}
-}
-//#endregion
-
-//#region Handle actions
 
 async function handleActions(req, res) {
 	let body = JSON.parse(req.body.payload);
 
-	var team = await findTeamForThisWeek();
+	var teamThisWeek = await findTeamForThisWeek();
 
 	console.log("Found team");
 
-	var i;
-	var teamsResponse;
-
 	if (body.actions[0].value == "who") {
-
-		teamsResponse = "This week's team is " + team.teamName + " formed of: ";
-		for (i = 0; i < team.members.length; i++) {
-			teamsResponse += "<@" + team.members[i].slackUserId + ">";
-			if (i == team.members.length - 2) {
-				teamsResponse += " and ";
-			} else if (i < team.members.length - 2) {
-				teamsResponse += ", ";
-			}
-		}
-
-		console.log("Teams response: " + teamsResponse);
-
-		try {
-			let response = await axios.post(body.response_url, { text: teamsResponse });
-			console.log(response);
-		} catch (error) {
-			console.log(error);
-		}
+		handleWho(teamThisWeek, body.response_url);
 	} else if (body.actions[0].value == "nudge") {
-		teamsResponse = "This week's team is " + team.teamName + " formed of: ";
-
-		for (i = 0; i < team.members.length; i++) {
-			try {
-				let openRoomResponse =
-					await axios.post(
-						"https://slack.com/api/im.open",
-						{ user: team.members[i] },
-						{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
-					);
-
-				console.log(openRoomResponse);
-
-				let postMessageResponse =
-					await axios.post(
-						"https://slack.com/api/chat.postMessage",
-						{
-							channel: body.channel.id,
-							text: "🚨🚨🚨 Red alert! The kitchen is filthy! 🚨🚨🚨\n\n\n"
-								+ "Ok, maybe that was too dramatic, but would you mind making sure everything's ok in there? 👌"
-						},
-						{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
-					);
-
-				console.log(postMessageResponse);
-			} catch (error) {
-				console.log(error);
-			}
-		}
-		try {
-			let postMessageToReporterResponse = await axios.post(
-				body.response_url,
-				{ text: "I've just sent a message to everyone in this week's team! 💨 Chop chop! 💨 " }
-			);
-			console.log(postMessageToReporterResponse);
-		} catch (error) {
-			console.log(error);
-		}
+		handleNudge(teamThisWeek, body.response_url, body.channel.id);
 	} else {
 		console.log("Bad input");
 	}
 }
+
+async function handleWho(teamThisWeek, responseUrl) {
+	var teamsResponse = "This week's team is " + teamThisWeek.teamName + " formed of: ";
+	for (var i = 0; i < teamThisWeek.members.length; i++) {
+		teamsResponse += "<@" + teamThisWeek.members[i].slackUserId + ">";
+		if (i == teamThisWeek.members.length - 2) {
+			teamsResponse += " and ";
+		} else if (i < teamThisWeek.members.length - 2) {
+			teamsResponse += ", ";
+		}
+	}
+
+	console.log("Teams response: " + teamsResponse);
+
+	try {
+		let response = await axios.post(responseUrl, { text: teamsResponse });
+		console.log(response);
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+async function handleNudge(teamThisWeek, responseUrl, channelId) {
+	for (var i = 0; i < teamThisWeek.members.length; i++) {
+		try {
+			let openRoomResponse =
+				await axios.post(
+					"https://slack.com/api/im.open",
+					{ user: teamThisWeek.members[i] },
+					{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
+				);
+
+			console.log(openRoomResponse);
+
+			let postMessageResponse =
+				await axios.post(
+					"https://slack.com/api/chat.postMessage",
+					{
+						channel: channelId,
+						text: "🚨🚨🚨 Red alert! The kitchen is filthy! 🚨🚨🚨\n\n\n"
+							+ "Ok, maybe that was too dramatic, but would you mind making sure "
+							+ "everything's ok in there? 👌"
+					},
+					{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
+				);
+
+			console.log(postMessageResponse);
+		} catch (error) {
+			console.log(error);
+		}
+	}
+	try {
+		let postMessageToReporterResponse = await axios.post(
+			responseUrl,
+			{ text: "I've just sent a message to everyone in this week's team! 💨 Chop chop! 💨 " }
+		);
+		console.log(postMessageToReporterResponse);
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+//#region Utils
 
 async function weeksFromStartDate() {
 	var ref = db.ref("/flamelink/environments/production/content/teamPlanning/en-US");

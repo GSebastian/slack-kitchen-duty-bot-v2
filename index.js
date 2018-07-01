@@ -1,6 +1,7 @@
 const app = require("express")();
 const bodyParser = require("body-parser");
 const displayActions = require("./functions/display-actions.js");
+const handleActionsImmediately = require("./functions/handle-actions-immediately.js");
 const handleActions = require("./functions/handle-actions.js");
 
 app.use(bodyParser.json());
@@ -10,8 +11,9 @@ app.post("/", (req, res) => {
 	displayActions(req, res);
 });
 
-app.post("/handle-actions", (req, res) => {
-	handleActions(req, res);
+app.post("/handle-actions", async (req, res) => {
+	await handleActionsImmediately(req, res);
+	await handleActions(req, res);
 });
 
 app.listen(3000, () => console.log("Server running"));
