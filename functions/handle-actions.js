@@ -1,4 +1,4 @@
-var request = require("request");
+var axios = require("axios");
 var admin = require("firebase-admin");
 var environment = require("../environment.js");
 
@@ -9,12 +9,12 @@ admin.initializeApp({
 
 var db = admin.database();
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
 	// Responds immediately. Firebase logic executes in the background and sends a request to
 	// the callback URL
 
-	handleActionsImmediately(req, res);
-	handleActions(req, res);
+	await handleActionsImmediately(req, res);
+	await handleActions(req, res);
 };
 
 //#region Handle actions immediately
@@ -51,65 +51,54 @@ async function handleActions(req, res) {
 				teamsResponse += ", ";
 			}
 		}
+
 		console.log("Teams response: " + teamsResponse);
-		request({
-			url: body.response_url,
-			method: "POST",
-			json: true,
-			body: { text: teamsResponse }
-		}, function (error, response, body) {
-			console.log("Who response " + body + " error " + error);
-			if (error) {
-				console.log(error);
-			} else {
-				console.log("Successfully made 'who' request");
-			}
-		});
+
+		try {
+			let response = await axios.post(body.response_url, { text: teamsResponse });
+			console.log(response);
+		} catch (error) {
+			console.log(error);
+		}
 	} else if (body.actions[0].value == "nudge") {
 		teamsResponse = "This week's team is " + team.teamName + " formed of: ";
+
 		for (i = 0; i < team.members.length; i++) {
-			request({
-				url: "https://slack.com/api/im.open",
-				method: "POST",
-				json: true,
-				headers: {
-					"Authorization": "Bearer " + environment.getSlackToken()
-				},
-				body: {
-					user: team.members[i].slackUserId
-				}
-			}, function (error, response, body) {
-				if (error == null) {
-					request({
-						url: "https://slack.com/api/chat.postMessage",
-						method: "POST",
-						json: true,
-						headers: {
-							"Authorization": "Bearer " + environment.getSlackToken()
-						},
-						body: {
+			try {
+				let openRoomResponse =
+					await axios.post(
+						"https://slack.com/api/im.open",
+						{ user: team.members[i] },
+						{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
+					);
+
+				console.log(openRoomResponse);
+
+				let postMessageResponse =
+					await axios.post(
+						"https://slack.com/api/chat.postMessage",
+						{
 							channel: body.channel.id,
 							text: "🚨🚨🚨 Red alert! The kitchen is filthy! 🚨🚨🚨\n\n\n"
 								+ "Ok, maybe that was too dramatic, but would you mind making sure everything's ok in there? 👌"
-						}
-					}, function (error, response, body) {
-						console.log(body);
-					});
-				}
-			});
-		}
-		request({
-			url: body.response_url,
-			method: "POST",
-			json: true,
-			body: { text: "I've just sent a message to everyone in this week's team! 💨 Chop chop! 💨 " }
-		}, function (error) {
-			if (error) {
+						},
+						{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
+					);
+
+				console.log(postMessageResponse);
+			} catch (error) {
 				console.log(error);
-			} else {
-				console.log("Successfully made 'nudge' request");
 			}
-		});
+		}
+		try {
+			let postMessageToReporterResponse = await axios.post(
+				body.response_url,
+				{ text: "I've just sent a message to everyone in this week's team! 💨 Chop chop! 💨 " }
+			);
+			console.log(postMessageToReporterResponse);
+		} catch (error) {
+			console.log(error);
+		}
 	} else {
 		console.log("Bad input");
 	}
