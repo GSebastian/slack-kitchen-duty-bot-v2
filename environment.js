@@ -2,7 +2,7 @@ let liveServiceAccount = require("./kitchen-duty-423cd-firebase-adminsdk-cvvco-5
 let testServiceAccount = require("./kitchen-duty-test-firebase-adminsdk-dxpbl-cf1bc3eb3b.json");
 let credentials = require("./credentials.json");
 
-let environment = "test"; // "live"
+let environment = "live"; // "live"
 
 module.exports = {
 	getFirebaseDatabaseUrl: function () {

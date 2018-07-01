@@ -96,10 +96,10 @@ async function weeksFromStartDate() {
 
 	console.log("TeamPlanning object startTime: " + teamPlanningObject.startTime);
 
-	let startDate = new Date(teamPlanningObject.startTime);
-	var currentDate = new Date();
+	let startMoment = moment(new Date(teamPlanningObject.startTime));
+	var currentMoment = moment();
 
-	var diffWeeks = Math.round((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+	var diffWeeks = currentMoment.diff(startMoment, 'week')
 
 	console.log("Weeks from start date: " + diffWeeks);
 
