@@ -23,7 +23,7 @@ async function handleActions(req, res) {
 	if (body.actions[0].value == "who") {
 		handleWho(teamThisWeek, body.response_url);
 	} else if (body.actions[0].value == "nudge") {
-		handleNudge(teamThisWeek, body.response_url, body.channel.id);
+		handleNudge(teamThisWeek, body.response_url);
 	} else {
 		console.log("Bad input");
 	}
@@ -50,13 +50,13 @@ async function handleWho(teamThisWeek, responseUrl) {
 	}
 }
 
-async function handleNudge(teamThisWeek, responseUrl, channelId) {
+async function handleNudge(teamThisWeek, responseUrl) {
 	for (var i = 0; i < teamThisWeek.members.length; i++) {
 		try {
 			let openRoomResponse =
 				await axios.post(
 					"https://slack.com/api/im.open",
-					{ user: teamThisWeek.members[i] },
+					{ user: teamThisWeek.members[i].slackUserId },
 					{ headers: { "Authorization": "Bearer " + environment.getSlackToken() } }
 				);
 
@@ -66,7 +66,7 @@ async function handleNudge(teamThisWeek, responseUrl, channelId) {
 				await axios.post(
 					"https://slack.com/api/chat.postMessage",
 					{
-						channel: channelId,
+						channel: openRoomResponse.data.channel.id,
 						text: "🚨🚨🚨 Red alert! The kitchen is filthy! 🚨🚨🚨\n\n\n"
 							+ "Ok, maybe that was too dramatic, but would you mind making sure "
 							+ "everything's ok in there? 👌"
