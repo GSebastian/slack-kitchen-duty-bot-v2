@@ -1,5 +1,12 @@
-const app = require("express")();
-const bodyParser = require("body-parser");
+var app = require("express")();
+var bodyParser = require("body-parser");
+var admin = require("firebase-admin");
+var environment = require("./environment.js");
+
+admin.initializeApp({
+	credential: admin.credential.cert(environment.getFirebaseServiceAccount()),
+	databaseURL: environment.getFirebaseDatabaseUrl()
+});
 
 const displayActions = require("./functions/display-actions.js");
 const handleActionsImmediately = require("./functions/handle-actions-immediately.js");

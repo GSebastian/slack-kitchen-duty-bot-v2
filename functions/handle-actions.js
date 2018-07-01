@@ -1,12 +1,7 @@
 var axios = require("axios");
 var admin = require("firebase-admin");
 var environment = require("../environment.js");
-
-admin.initializeApp({
-	credential: admin.credential.cert(environment.getFirebaseServiceAccount()),
-	databaseURL: environment.getFirebaseDatabaseUrl()
-});
-
+var moment = require("moment");
 var db = admin.database();
 
 module.exports = async (req, res) => {
@@ -80,6 +75,8 @@ async function handleNudge(teamThisWeek, responseUrl) {
 		}
 	}
 	try {
+		saveLastNudgeTime();
+
 		let postMessageToReporterResponse = await axios.post(
 			responseUrl,
 			{ text: "I've just sent a message to everyone in this week's team! 💨 Chop chop! 💨 " }
@@ -156,6 +153,10 @@ async function findTeamForThisWeek() {
 	} catch (err) {
 		console.log(err);
 	}
+}
+
+function saveLastNudgeTime() {
+	db.ref("lastNudge").set(moment().valueOf());
 }
 
 //#endregion

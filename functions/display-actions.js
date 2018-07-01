@@ -1,4 +1,10 @@
-module.exports = (req, res) => {
+var admin = require("firebase-admin");
+var moment = require("moment");
+var db = admin.database();
+
+module.exports = async (req, res) => {
+	let lastNudgeTime = await getLastNudgeTime();
+
 	let response = {
 		"text": "How can I help?",
 		"attachments": [
@@ -22,7 +28,9 @@ module.exports = (req, res) => {
 						"value": "nudge",
 						"confirm": {
 							"title": "Oh no! I'll let the team know!",
-							"text": "Are you sure you want to do this?",
+							"text": "Are you sure you want to do this?" +
+								(lastNudgeTime != null ? " They were last notified " +
+									lastNudgeTime + "." : ""),
 							"ok_text": "Yeah, it's awful!",
 							"dismiss_text": "It can wait"
 						}
@@ -33,3 +41,20 @@ module.exports = (req, res) => {
 	};
 	res.send(response);
 };
+
+//#region Utils
+
+async function getLastNudgeTime() {
+	let lastNudgeSnapshot = await db.ref("lastNudge").once("value");
+	let lastNudgeTimestamp = lastNudgeSnapshot.val();
+
+	if (lastNudgeTimestamp == null) {
+		return null;
+	}
+
+	let lastNudge = moment(lastNudgeTimestamp).fromNow();
+
+	return lastNudge;
+}
+
+//#endregion
