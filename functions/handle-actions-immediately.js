@@ -1,7 +1,4 @@
 module.exports = async (req, res) => {
-	// Responds immediately. Firebase logic executes in the background and sends a request to
-	// the callback URL
-
 	await handleActionsImmediately(req, res);
 };
 
