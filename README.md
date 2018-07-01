@@ -19,3 +19,11 @@ docker-machine ls
 ```
 ngrok http 3000
 ```
+
+```
+heroku container:push web -a slack-kitchen-duty-app
+```
+
+```
+heroku container:release web -a slack-kitchen-duty-app
+```
